@@ -1,0 +1,7 @@
+import { Hono } from "hono";
+import { modelRoutes } from "./model.route";
+import { apiKeyRoutes } from "./api-key.route";
+
+export const apiRoutes = new Hono()
+  .route("/models", modelRoutes)
+  .route("/keys", apiKeyRoutes);
