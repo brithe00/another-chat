@@ -13,7 +13,7 @@ app.use(
   "/*",
   cors({
     origin: process.env.CORS_ORIGIN || "",
-    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
@@ -24,6 +24,10 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.get("/", (c) => {
   return c.text("OK");
+});
+
+app.notFound((c) => {
+  return c.json({ error: "Not Found" }, 404);
 });
 
 const router = app.route("/api", apiRoutes);
