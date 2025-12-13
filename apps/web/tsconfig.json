@@ -12,7 +12,11 @@
 		"rootDirs": ["."],
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"server": ["../server/src/index.ts"]
 		}
-	}
+	},
+	"references": [
+		{ "path": "../server" }
+	]
 }
