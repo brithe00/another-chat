@@ -17,8 +17,28 @@ export const apiKeyCreateSchema = z.object({
 });
 
 export const apiKeyDeleteSchema = z.object({
-  keyId: z.cuid().min(1, "Key ID cannot be empty"),
+  keyId: z.uuid().min(1, "Key ID cannot be empty"),
+});
+
+export const apiKeyToggleActiveParamSchema = z.object({
+  keyId: z.uuid().min(1, "Key ID cannot be empty"),
+});
+
+export const apiKeyToggleActiveBodySchema = z.object({
+  isActive: z.boolean(),
+});
+
+export const apiKeyUpdateLabelParamSchema = z.object({
+  keyId: z.uuid().min(1, "Key ID cannot be empty"),
+});
+
+export const apiKeyUpdateLabelBodySchema = z.object({
+  label: z.string().max(100, "Label is too long").optional(),
 });
 
 export type ApiKeyCreateInput = z.infer<typeof apiKeyCreateSchema>;
 export type ApiKeyDeleteInput = z.infer<typeof apiKeyDeleteSchema>;
+export type ApiKeyToggleActiveParam = z.infer<typeof apiKeyToggleActiveParamSchema>;
+export type ApiKeyToggleActiveBody = z.infer<typeof apiKeyToggleActiveBodySchema>;
+export type ApiKeyUpdateLabelParam = z.infer<typeof apiKeyUpdateLabelParamSchema>;
+export type ApiKeyUpdateLabelBody = z.infer<typeof apiKeyUpdateLabelBodySchema>;

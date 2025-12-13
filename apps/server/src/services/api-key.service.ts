@@ -46,6 +46,22 @@ export class ApiKeyService {
   async deleteApiKey(userId: string, keyId: string): Promise<ApiKey> {
     return await apiKeyRepository.delete(userId, keyId);
   }
+
+  async toggleActive(
+    userId: string,
+    keyId: string,
+    isActive: boolean
+  ): Promise<ApiKey> {
+    return await apiKeyRepository.updateActive(userId, keyId, isActive);
+  }
+
+  async updateLabel(
+    userId: string,
+    keyId: string,
+    label?: string
+  ): Promise<ApiKey> {
+    return await apiKeyRepository.updateLabel(userId, keyId, label);
+  }
 }
 
 export const apiKeyService = new ApiKeyService();

@@ -59,6 +59,38 @@ export class ApiKeyRepository {
       },
     });
   }
+
+  async updateActive(
+    userId: string,
+    keyId: string,
+    isActive: boolean
+  ): Promise<ApiKey> {
+    return await prisma.apiKey.update({
+      where: {
+        id: keyId,
+        userId,
+      },
+      data: {
+        isActive,
+      },
+    });
+  }
+
+  async updateLabel(
+    userId: string,
+    keyId: string,
+    label?: string
+  ): Promise<ApiKey> {
+    return await prisma.apiKey.update({
+      where: {
+        id: keyId,
+        userId,
+      },
+      data: {
+        label,
+      },
+    });
+  }
 }
 
 export const apiKeyRepository = new ApiKeyRepository();
