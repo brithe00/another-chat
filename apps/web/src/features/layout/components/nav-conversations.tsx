@@ -18,16 +18,22 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-export function NavConversations({
-  conversations,
-}: {
+interface NavConversationsProps {
   conversations: {
     id: string;
     title: string;
     date: string;
     isActive?: boolean;
   }[];
-}) {
+  onRename?: (id: string) => void;
+  onDelete?: (id: string) => void;
+}
+
+export function NavConversations({
+  conversations,
+  onRename,
+  onDelete,
+}: NavConversationsProps) {
   const { isMobile } = useSidebar();
 
   return (
@@ -36,7 +42,11 @@ export function NavConversations({
       <SidebarMenu>
         {conversations.map((conversation) => (
           <SidebarMenuItem key={conversation.id}>
-            <SidebarMenuButton asChild isActive={conversation.isActive}>
+            <SidebarMenuButton
+              asChild
+              isActive={conversation.isActive}
+              tooltip={conversation.title}
+            >
               <Link to="/chat/$chatId" params={{ chatId: conversation.id }}>
                 <MessageSquare />
                 <div className="flex flex-col items-start flex-1 min-w-0">
@@ -59,12 +69,15 @@ export function NavConversations({
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRename?.(conversation.id)}>
                   <Edit3 className="text-muted-foreground" />
                   <span>Rename</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => onDelete?.(conversation.id)}
+                >
                   <Trash2 className="text-destructive" />
                   <span>Delete</span>
                 </DropdownMenuItem>
