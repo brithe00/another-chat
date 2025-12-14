@@ -1,4 +1,5 @@
 import { client } from "@/lib/api-client";
+import { handleApiError } from "@/lib/errors";
 import {
   saveApiKeySchema,
   toggleActiveSchema,
@@ -26,10 +27,7 @@ export const apiKeyApi = {
 
       return response.json();
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("An unexpected error occurred while saving the API key");
+      handleApiError(error, "An unexpected error occurred while saving the API key");
     }
   },
 
@@ -43,10 +41,7 @@ export const apiKeyApi = {
 
       return response.json() as Promise<ApiKeyListItem[]>;
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("An unexpected error occurred while fetching API keys");
+      handleApiError(error, "An unexpected error occurred while fetching API keys");
     }
   },
 
@@ -65,12 +60,7 @@ export const apiKeyApi = {
 
       return response.json();
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(
-        "An unexpected error occurred while updating the API key status"
-      );
+      handleApiError(error, "An unexpected error occurred while updating the API key status");
     }
   },
 
@@ -89,12 +79,7 @@ export const apiKeyApi = {
 
       return response.json();
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(
-        "An unexpected error occurred while updating the API key label"
-      );
+      handleApiError(error, "An unexpected error occurred while updating the API key label");
     }
   },
 
@@ -112,12 +97,7 @@ export const apiKeyApi = {
 
       return response.json();
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(
-        "An unexpected error occurred while deleting the API key"
-      );
+      handleApiError(error, "An unexpected error occurred while deleting the API key");
     }
   },
 };

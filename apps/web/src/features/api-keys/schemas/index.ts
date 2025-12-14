@@ -10,7 +10,7 @@ export const saveApiKeySchema = z.object({
       "Provider can only contain letters, numbers, underscores, and hyphens"
     ),
   apiKey: z
-    .string()
+    .uuid()
     .min(1, "API key cannot be empty")
     .max(500, "API key is too long"),
   label: z.string().max(100, "Label is too long").optional(),
@@ -22,12 +22,12 @@ export const toggleActiveSchema = z.object({
 });
 
 export const updateLabelSchema = z.object({
-  keyId: z.string().uuid("Invalid key ID"),
+  keyId: z.uuid("Invalid key ID"),
   label: z.string().max(100, "Label is too long").optional(),
 });
 
 export const deleteApiKeySchema = z.object({
-  keyId: z.string().uuid("Invalid key ID"),
+  keyId: z.uuid("Invalid key ID"),
 });
 
 export type SaveApiKeyInput = z.infer<typeof saveApiKeySchema>;

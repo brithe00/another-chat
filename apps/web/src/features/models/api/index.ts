@@ -1,8 +1,9 @@
 import { client } from "@/lib/api-client";
+import { handleApiError } from "@/lib/errors";
 import {
   getModelsByProviderSchema,
   type GetModelsByProviderInput,
-} from "./schemas";
+} from "../schemas";
 
 export const modelApi = {
   listModels: async () => {
@@ -15,10 +16,10 @@ export const modelApi = {
 
       return response.json();
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("An unexpected error occurred while fetching models");
+      handleApiError(
+        error,
+        "An unexpected error occurred while fetching models"
+      );
     }
   },
 
@@ -36,10 +37,8 @@ export const modelApi = {
 
       return response.json();
     } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(
+      handleApiError(
+        error,
         "An unexpected error occurred while fetching models for provider"
       );
     }

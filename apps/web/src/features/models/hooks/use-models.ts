@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { modelApi } from "../api";
 import type { GetModelsByProviderInput } from "../schemas";
+import { modelApi } from "../api";
 
 export const modelsKeys = {
   all: ["models"] as const,
