@@ -10,7 +10,7 @@ export const saveApiKeySchema = z.object({
       "Provider can only contain letters, numbers, underscores, and hyphens"
     ),
   apiKey: z
-    .uuid()
+    .string()
     .min(1, "API key cannot be empty")
     .max(500, "API key is too long"),
   label: z.string().max(100, "Label is too long").optional(),
