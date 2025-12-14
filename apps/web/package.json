@@ -19,6 +19,7 @@
     "@prisma/client": "catalog:",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@tailwindcss/vite": "^4.0.15",
+    "@tanstack/ai-react": "^0.0.3",
     "@tanstack/react-form": "^1.12.3",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-router": "^1.141.1",
