@@ -78,6 +78,7 @@ CREATE TABLE "conversations" (
     "provider" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "userId" TEXT NOT NULL,
 
     CONSTRAINT "conversations_pkey" PRIMARY KEY ("id")
