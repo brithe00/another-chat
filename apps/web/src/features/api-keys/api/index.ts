@@ -8,6 +8,7 @@ import {
   type ToggleActiveInput,
   type UpdateLabelInput,
   type DeleteApiKeyInput,
+  type ApiKeyListItem,
 } from "../schemas";
 
 export const apiKeyApi = {
@@ -32,7 +33,7 @@ export const apiKeyApi = {
     }
   },
 
-  listApiKeys: async () => {
+  listApiKeys: async (): Promise<ApiKeyListItem[]> => {
     try {
       const response = await client.api.keys.$get();
 
@@ -40,7 +41,7 @@ export const apiKeyApi = {
         throw new Error("Failed to fetch API keys");
       }
 
-      return response.json();
+      return response.json() as Promise<ApiKeyListItem[]>;
     } catch (error) {
       if (error instanceof Error) {
         throw error;

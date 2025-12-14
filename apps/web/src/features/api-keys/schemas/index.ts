@@ -34,3 +34,13 @@ export type SaveApiKeyInput = z.infer<typeof saveApiKeySchema>;
 export type ToggleActiveInput = z.infer<typeof toggleActiveSchema>;
 export type UpdateLabelInput = z.infer<typeof updateLabelSchema>;
 export type DeleteApiKeyInput = z.infer<typeof deleteApiKeySchema>;
+
+export interface ApiKeyListItem {
+  id?: string;
+  provider?: string;
+  label?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  userId?: string;
+}
