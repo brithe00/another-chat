@@ -23,9 +23,11 @@ import { RenameConversationDialog } from "@/features/chat/components/rename-conv
 import { DeleteConversationDialog } from "@/features/chat/components/delete-conversation-dialog";
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/date";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const params = useParams({ strict: false });
   const currentChatId = params?.chatId;
 
@@ -91,6 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
+          queryClient.clear();
           navigate({ to: "/login", search: { redirect: "/" } });
         },
       },
