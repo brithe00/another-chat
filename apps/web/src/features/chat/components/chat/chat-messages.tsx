@@ -4,6 +4,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { MessageResponse } from "@/components/ai-elements/message";
 
 interface ChatMessage {
   id: string;
@@ -51,58 +52,59 @@ export function ChatMessages({
     <Conversation>
       <ConversationContent className="p-4">
         <div className="space-y-6">
-          {messages
-            .filter((msg) => msg.content.trim())
-            .map((message) => (
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex gap-3 ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
               <div
-                key={message.id}
-                className={`flex gap-3 ${
-                  message.role === "user" ? "justify-end" : "justify-start"
+                className={`flex gap-3 w-fit max-w-[75%] ${
+                  message.role === "user"
+                    ? "flex-row-reverse ml-auto"
+                    : "flex-row mr-auto"
                 }`}
               >
                 <div
-                  className={`flex gap-3 w-fit max-w-[75%] ${
+                  className={`flex h-8 w-8 shrink-0 select-none items-center justify-center text-xs font-medium ${
                     message.role === "user"
-                      ? "flex-row-reverse ml-auto"
-                      : "flex-row mr-auto"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
                   }`}
                 >
+                  {message.role === "user" ? "U" : "AI"}
+                </div>
+
+                <div className="flex flex-col gap-1 min-w-0">
                   <div
-                    className={`flex h-8 w-8 shrink-0 select-none items-center justify-center text-xs font-medium ${
+                    className={`px-4 py-2 ${
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
                     }`}
                   >
-                    {message.role === "user" ? "U" : "AI"}
+                    {message.role === "user" ? (
+                      <p className="whitespace-pre-wrap break-words m-0 text-sm">
+                        {message.content}
+                      </p>
+                    ) : (
+                      <MessageResponse className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                        {message.content}
+                      </MessageResponse>
+                    )}
                   </div>
-
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <div
-                      className={`px-4 py-2 ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <p className="whitespace-pre-wrap break-words m-0">
-                          {message.content}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-muted-foreground px-2">
-                      {message.timestamp.toLocaleTimeString()}
-                    </span>
-                  </div>
+                  <span className="text-xs text-muted-foreground px-2">
+                    {message.timestamp.toLocaleTimeString()}
+                  </span>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
 
           {isStreaming &&
-            messages.filter((msg) => msg.content.trim())[
-              messages.filter((msg) => msg.content.trim()).length - 1
-            ]?.role !== "assistant" && (
+            messages.length > 0 &&
+            messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-3 justify-start">
                 <div className="flex gap-3 w-fit flex-row">
                   <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center text-xs font-medium bg-muted">
