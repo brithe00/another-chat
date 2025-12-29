@@ -28,6 +28,7 @@ export const createConversationSchema = z.object({
   model: z.string().min(1, "Model is required"),
   provider: z.string().min(1, "Provider is required"),
   initialMessage: z.string().optional(),
+  saveInitialMessage: z.boolean().optional(),
 });
 
 export const streamChatSchema = z.object({
