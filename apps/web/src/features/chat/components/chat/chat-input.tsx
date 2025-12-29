@@ -36,19 +36,22 @@ const providerToChef: Record<string, { name: string; slug: string }> = {
 
 interface ChatInputProps {
   onSubmit: (message: string, selectedModel: string, provider: string) => void;
-  defaultModel?: string;
+  conversationModel?: string;
+  conversationProvider?: string;
   isLoading?: boolean;
   disabled?: boolean;
 }
 
-/* WIP */
 export function ChatInput({
   onSubmit,
-  defaultModel,
+  conversationModel,
+  conversationProvider,
   isLoading = false,
   disabled = false,
 }: ChatInputProps) {
   const { data: modelsData, isLoading: modelsLoading } = useModels();
+
+  const isLocked = !!conversationModel;
 
   const models = useMemo(() => {
     if (!modelsData || !Array.isArray(modelsData)) return [];
@@ -94,12 +97,17 @@ export function ChatInput({
     return Array.from(modelMap.values());
   }, [modelsData]);
 
-  const [model, setModel] = useState<string | null>(defaultModel || null);
+  const [model, setModel] = useState<string | null>(null);
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const currentModel = model || models[0]?.id || "";
+  const currentModel = conversationModel || model || models[0]?.id || "";
+  const currentProvider = conversationProvider || null;
   const selectedModelData = models.find((m) => m.id === currentModel);
+
+  const lockedChefSlug = currentProvider
+    ? providerToChef[currentProvider]?.slug || currentProvider
+    : selectedModelData?.chefSlug;
 
   const handleSubmit = () => {
     const textarea = textareaRef.current;
@@ -142,74 +150,87 @@ export function ChatInput({
             </PromptInputBody>
             <PromptInputFooter>
               <PromptInputTools>
-                <ModelSelector
-                  onOpenChange={setModelSelectorOpen}
-                  open={modelSelectorOpen}
-                >
-                  <ModelSelectorTrigger asChild>
-                    <PromptInputButton
-                      disabled={modelsLoading || disabled || isLoading}
-                    >
-                      {modelsLoading ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : selectedModelData?.chefSlug ? (
-                        <ModelSelectorLogo
-                          provider={selectedModelData.chefSlug}
-                        />
-                      ) : null}
-                      {selectedModelData?.name && (
-                        <ModelSelectorName>
-                          {selectedModelData.name}
-                        </ModelSelectorName>
-                      )}
-                    </PromptInputButton>
-                  </ModelSelectorTrigger>
-                  <ModelSelectorContent>
-                    <ModelSelectorInput placeholder="Search models..." />
-                    <ModelSelectorList>
-                      {modelsLoading ? (
-                        <div className="flex items-center justify-center py-6">
-                          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-                        </div>
-                      ) : models.length === 0 ? (
-                        <ModelSelectorEmpty>
-                          No active models found. Add API keys in settings.
-                        </ModelSelectorEmpty>
-                      ) : (
-                        modelsByChef.map(([chef, chefModels]) => (
-                          <ModelSelectorGroup heading={chef} key={chef}>
-                            {chefModels.map((m) => (
-                              <ModelSelectorItem
-                                key={m.id}
-                                onSelect={() => {
-                                  setModel(m.id);
-                                  setModelSelectorOpen(false);
-                                }}
-                                value={m.id}
-                              >
-                                <ModelSelectorLogo provider={m.chefSlug} />
-                                <ModelSelectorName>{m.name}</ModelSelectorName>
-                                <ModelSelectorLogoGroup>
-                                  {m.providers.map((provider) => (
-                                    <ModelSelectorLogo
-                                      key={provider}
-                                      provider={provider}
-                                    />
-                                  ))}
-                                </ModelSelectorLogoGroup>
-                                {currentModel === m.id ? (
-                                  <CheckIcon className="ml-auto size-4" />
-                                ) : (
-                                  <div className="ml-auto size-4" />
-                                )}
-                              </ModelSelectorItem>
-                            ))}
-                          </ModelSelectorGroup>
-                        ))
-                      )}
-                    </ModelSelectorList>
-                  </ModelSelectorContent>
-                </ModelSelector>
+                {isLocked ? (
+                  <PromptInputButton disabled className="cursor-default">
+                    {lockedChefSlug && (
+                      <ModelSelectorLogo provider={lockedChefSlug} />
+                    )}
+                    <ModelSelectorName>
+                      {selectedModelData?.name || conversationModel}
+                    </ModelSelectorName>
+                  </PromptInputButton>
+                ) : (
+                  <ModelSelector
+                    onOpenChange={setModelSelectorOpen}
+                    open={modelSelectorOpen}
+                  >
+                    <ModelSelectorTrigger asChild>
+                      <PromptInputButton
+                        disabled={modelsLoading || disabled || isLoading}
+                      >
+                        {modelsLoading ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : selectedModelData?.chefSlug ? (
+                          <ModelSelectorLogo
+                            provider={selectedModelData.chefSlug}
+                          />
+                        ) : null}
+                        {selectedModelData?.name && (
+                          <ModelSelectorName>
+                            {selectedModelData.name}
+                          </ModelSelectorName>
+                        )}
+                      </PromptInputButton>
+                    </ModelSelectorTrigger>
+                    <ModelSelectorContent>
+                      <ModelSelectorInput placeholder="Search models..." />
+                      <ModelSelectorList>
+                        {modelsLoading ? (
+                          <div className="flex items-center justify-center py-6">
+                            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : models.length === 0 ? (
+                          <ModelSelectorEmpty>
+                            No active models found. Add API keys in settings.
+                          </ModelSelectorEmpty>
+                        ) : (
+                          modelsByChef.map(([chef, chefModels]) => (
+                            <ModelSelectorGroup heading={chef} key={chef}>
+                              {chefModels.map((m) => (
+                                <ModelSelectorItem
+                                  key={m.id}
+                                  onSelect={() => {
+                                    setModel(m.id);
+                                    setModelSelectorOpen(false);
+                                  }}
+                                  value={m.id}
+                                >
+                                  <ModelSelectorLogo provider={m.chefSlug} />
+                                  <ModelSelectorName>
+                                    {m.name}
+                                  </ModelSelectorName>
+                                  <ModelSelectorLogoGroup>
+                                    {m.providers.map((provider) => (
+                                      <ModelSelectorLogo
+                                        key={provider}
+                                        provider={provider}
+                                      />
+                                    ))}
+                                  </ModelSelectorLogoGroup>
+                                  {currentModel === m.id ? (
+                                    <CheckIcon className="ml-auto size-4" />
+                                  ) : (
+                                    <div className="ml-auto size-4" />
+                                  )}
+                                </ModelSelectorItem>
+                              ))}
+                            </ModelSelectorGroup>
+                          ))
+                        )}
+                      </ModelSelectorList>
+                    </ModelSelectorContent>
+                  </ModelSelector>
+                )}
               </PromptInputTools>
               <PromptInputSubmit disabled={disabled || isLoading} />
             </PromptInputFooter>
