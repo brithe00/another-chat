@@ -26,11 +26,16 @@ app.get("/", (c) => {
   return c.text("OK");
 });
 
+const router = app.route("/api", apiRoutes);
+
 app.notFound((c) => {
   return c.json({ error: "Not Found" }, 404);
 });
 
-const router = app.route("/api", apiRoutes);
-
 export type AppType = typeof router;
-export default app;
+
+export default {
+  port: process.env.PORT || 3000,
+  fetch: app.fetch,
+  idleTimeout: 120, // 2 minutes timeout for locals models
+};
