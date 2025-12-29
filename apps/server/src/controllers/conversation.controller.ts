@@ -12,7 +12,7 @@ import type {
 } from "@/schemas/conversation.schema";
 import { conversationService } from "@/services/conversation.service";
 import { aiService } from "@/services/ai.service";
-import { toStreamResponse } from "@tanstack/ai";
+import { toServerSentEventsStream } from "@tanstack/ai";
 import type { Context } from "hono";
 
 export class ConversationController {
@@ -206,8 +206,7 @@ export class ConversationController {
     }
   }
 
-  /* WIP */
-  async streamChat(
+  async stream(
     c: Context,
     conversationId: string,
     messages: Array<{ role: string; content: string }>
@@ -218,48 +217,33 @@ export class ConversationController {
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      console.log("🎯 streamChat controller called", {
-        conversationId,
-        messagesCount: messages.length,
-        messages,
-      });
-
       const lastMessage = messages[messages.length - 1];
-      if (!lastMessage || !lastMessage.content) {
-        console.error("❌ No message provided");
-        return c.json({ error: "No message provided" }, 400);
-      }
+      const userMessage = lastMessage?.content || "";
 
-      console.log("📨 Last message:", lastMessage);
-
-      const stream = await aiService.streamChatCompletion(
+      const stream = await aiService.streamConversation(
         conversationId,
-        lastMessage.content,
+        userMessage,
         user.id
       );
 
-      console.log("🔄 Calling toStreamResponse");
-      const response = toStreamResponse(stream);
-      console.log("✅ toStreamResponse returned");
+      const sseStream = toServerSentEventsStream(stream);
 
-      return response;
+      return new Response(sseStream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
     } catch (error) {
-      console.error("❌ Error streaming chat:", error);
-
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to stream chat";
-
-      const errorStream = async function* () {
-        yield {
-          type: "error" as const,
-          id: crypto.randomUUID(),
-          model: "unknown",
-          timestamp: new Date(),
-          error: { message: errorMessage },
-        };
-      };
-
-      return toStreamResponse(errorStream() as any);
+      console.error("Error in stream:", error);
+      return c.json(
+        {
+          error:
+            error instanceof Error ? error.message : "Failed to stream chat",
+        },
+        500
+      );
     }
   }
 }

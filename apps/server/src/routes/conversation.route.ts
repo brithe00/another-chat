@@ -23,22 +23,14 @@ export const conversationRoutes = new Hono()
     const validatedData = c.req.valid("json");
     return conversationController.createConversation(c, validatedData);
   })
-  .get(
-    "/",
-    zValidator("query", listConversationsQuerySchema),
-    async (c) => {
-      const validatedData = c.req.valid("query");
-      return conversationController.listConversations(c, validatedData);
-    }
-  )
-  .get(
-    "/:id",
-    zValidator("param", getConversationParamSchema),
-    async (c) => {
-      const validatedData = c.req.valid("param");
-      return conversationController.getConversation(c, validatedData);
-    }
-  )
+  .get("/", zValidator("query", listConversationsQuerySchema), async (c) => {
+    const validatedData = c.req.valid("query");
+    return conversationController.listConversations(c, validatedData);
+  })
+  .get("/:id", zValidator("param", getConversationParamSchema), async (c) => {
+    const validatedData = c.req.valid("param");
+    return conversationController.getConversation(c, validatedData);
+  })
   .patch(
     "/:id/title",
     zValidator("param", updateConversationTitleParamSchema),
@@ -84,7 +76,7 @@ export const conversationRoutes = new Hono()
     async (c) => {
       const paramData = c.req.valid("param");
       const bodyData = c.req.valid("json");
-      return conversationController.streamChat(
+      return conversationController.stream(
         c,
         paramData.conversationId,
         bodyData.messages

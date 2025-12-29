@@ -85,12 +85,14 @@ export const streamChatParamSchema = z.object({
 });
 
 export const streamChatBodySchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["user", "assistant", "system"]),
-      content: z.string(),
-    })
-  ),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant", "tool"]),
+        content: z.string(),
+      })
+    )
+    .min(1, "Messages array cannot be empty"),
 });
 
 export type MessageRole = z.infer<typeof messageRoleSchema>;
