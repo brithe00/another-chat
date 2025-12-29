@@ -1,23 +1,120 @@
 import { chat, type StreamChunk } from "@tanstack/ai";
-import { createOpenAI } from "@tanstack/ai-openai";
-import { createOllama } from "@tanstack/ai-ollama";
+import { openaiText } from "@tanstack/ai-openai";
+import { ollamaText } from "@tanstack/ai-ollama";
 import type { Message } from "@another-chat/db/types";
 import { apiKeyService } from "./api-key.service";
 import { conversationService } from "./conversation.service";
 
 type ChatMessage = {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "tool";
   content: string;
 };
 
 export class AIService {
   private readonly localProviders = ["ollama"];
 
-  private async getAdapter(userId: string, provider: string) {
+  async streamConversation(
+    conversationId: string,
+    userMessage: string,
+    userId: string
+  ): Promise<AsyncIterable<StreamChunk>> {
+    const conversation = await conversationService.getConversation(
+      conversationId,
+      userId
+    );
+
+    const dbMessages = conversation.messages || [];
+    const chatMessages: ChatMessage[] = this.convertMessages(dbMessages);
+
+    chatMessages.push({
+      role: "user",
+      content: userMessage,
+    });
+
+    const systemPrompts = this.extractSystemPrompts(dbMessages);
+
+    const adapter = await this.getAdapter(
+      userId,
+      conversation.provider,
+      conversation.model
+    );
+
+    const stream = chat({
+      adapter: adapter as any,
+      messages: chatMessages,
+      ...(systemPrompts.length > 0 ? { systemPrompts } : {}),
+    });
+
+    return this.streamWithSave(
+      stream,
+      conversationId,
+      userMessage,
+      conversation.model,
+      userId
+    );
+  }
+
+  private async *streamWithSave(
+    stream: AsyncIterable<StreamChunk>,
+    conversationId: string,
+    userMessage: string,
+    model: string,
+    userId: string
+  ): AsyncIterable<StreamChunk> {
+    let assistantResponse = "";
+
+    for await (const chunk of stream) {
+      if (chunk.type === "content") {
+        assistantResponse = chunk.content;
+      }
+      yield chunk;
+    }
+
+    try {
+      await conversationService.addMessage(
+        conversationId,
+        userId,
+        "user",
+        userMessage,
+        model
+      );
+
+      if (assistantResponse.trim()) {
+        await conversationService.addMessage(
+          conversationId,
+          userId,
+          "assistant",
+          assistantResponse,
+          model
+        );
+      }
+
+      console.log("✅ Messages saved to DB");
+    } catch (error) {
+      console.error("❌ Failed to save messages:", error);
+    }
+  }
+
+  private convertMessages(messages: Message[]): ChatMessage[] {
+    return messages
+      .filter((msg) => msg.role !== "system")
+      .map((msg) => ({
+        role: msg.role as "user" | "assistant" | "tool",
+        content: msg.content,
+      }));
+  }
+
+  private extractSystemPrompts(messages: Message[]): string[] {
+    return messages
+      .filter((msg) => msg.role === "system")
+      .map((msg) => msg.content);
+  }
+
+  private async getAdapter(userId: string, provider: string, model: string) {
     const providerLower = provider.toLowerCase();
 
     if (this.localProviders.includes(providerLower)) {
-      return this.createLocalAdapter(providerLower);
+      return this.createLocalAdapter(providerLower, model);
     }
 
     const apiKeyRecord = await apiKeyService.getApiKeyByUserAndProvider(
@@ -31,115 +128,25 @@ export class AIService {
       );
     }
 
-    return this.createCloudAdapter(providerLower, apiKeyRecord.apiKey);
+    return this.createCloudAdapter(providerLower, apiKeyRecord.apiKey, model);
   }
 
-  private createLocalAdapter(provider: string) {
+  private createLocalAdapter(provider: string, model: string) {
     switch (provider) {
       case "ollama":
-        return createOllama();
-
+        return ollamaText(model as any);
       default:
         throw new Error(`Unsupported local provider: ${provider}`);
     }
   }
 
-  private createCloudAdapter(provider: string, apiKey: string) {
+  private createCloudAdapter(provider: string, apiKey: string, model: string) {
     switch (provider) {
       case "openai":
-        return createOpenAI(apiKey);
-      // TODO: Add more providers
-      // case "anthropic":
-      //   return anthropic(apiKey);
+        return openaiText(model as any, { apiKey });
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
-  }
-
-  private convertMessages(messages: Message[]): ChatMessage[] {
-    return messages
-      .filter((msg) => msg.role !== "system")
-      .map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-      }));
-  }
-
-  private extractSystemPrompts(messages: Message[]): string[] {
-    return messages
-      .filter((msg) => msg.role === "system")
-      .map((msg) => msg.content);
-  }
-
-  /* WIP */
-  async streamChatCompletion(
-    conversationId: string,
-    userMessage: string,
-    userId: string
-  ): Promise<AsyncIterable<StreamChunk>> {
-    console.log("🚀 streamChatCompletion called", {
-      conversationId,
-      userMessage,
-    });
-
-    const conversation = await conversationService.getConversation(
-      conversationId,
-      userId
-    );
-
-    if (!conversation) {
-      throw new Error("Conversation not found or access denied");
-    }
-
-    console.log("✅ Conversation found", {
-      model: conversation.model,
-      provider: conversation.provider,
-      messagesCount: conversation.messages?.length || 0,
-    });
-
-    const adapter = await this.getAdapter(userId, conversation.provider);
-    console.log("✅ Adapter created");
-
-    const messages = conversation.messages || [];
-    const chatMessages = this.convertMessages(messages);
-    const systemPrompts = this.extractSystemPrompts(messages);
-
-    chatMessages.push({
-      role: "user",
-      content: userMessage,
-    });
-
-    console.log("📤 Chat config:", {
-      model: conversation.model,
-      messagesCount: chatMessages.length,
-      messages: chatMessages,
-      systemPromptsCount: systemPrompts.length,
-      systemPrompts,
-    });
-
-    const stream = chat({
-      adapter: adapter as any,
-      messages: chatMessages,
-      model: conversation.model as any,
-      ...(systemPrompts.length > 0 ? { systemPrompts } : {}),
-    });
-
-    return this.logStream(stream);
-  }
-
-  private async *logStream(
-    stream: AsyncIterable<StreamChunk>
-  ): AsyncIterable<StreamChunk> {
-    console.log("🌊 Stream started");
-    let chunkCount = 0;
-
-    for await (const chunk of stream) {
-      chunkCount++;
-      console.log(`📦 Chunk ${chunkCount}:`, chunk.type, chunk);
-      yield chunk;
-    }
-
-    console.log(`✅ Stream completed - ${chunkCount} chunks`);
   }
 }
 
